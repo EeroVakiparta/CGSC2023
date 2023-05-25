@@ -10,7 +10,11 @@ public class Hex {
     int neigh4;
     int neigh5;
 
-    public Hex(int index, int type, int initialResources, int neigh0, int neigh1, int neigh2, int neigh3, int neigh4, int neigh5) {
+    int resources;// the current amount of eggs/crystals on this cell
+    int myAnts; // the amount of your ants on this cell
+    int oppAnts; // the amount of opponent ants on this cell
+
+    public Hex(int index, int type, int initialResources, int neigh0, int neigh1, int neigh2, int neigh3, int neigh4, int neigh5, int resources, int myAnts, int oppAnts) {
         this.index = index;
         this.type = type;
         this.initialResources = initialResources;
@@ -20,6 +24,9 @@ public class Hex {
         this.neigh3 = neigh3;
         this.neigh4 = neigh4;
         this.neigh5 = neigh5;
+        this.resources = resources;
+        this.myAnts = myAnts;
+        this.oppAnts = oppAnts;
     }
 
     public int getIndex() {
@@ -94,6 +101,30 @@ public class Hex {
         this.neigh5 = neigh5;
     }
 
+    public int getResources() {
+        return resources;
+    }
+
+    public void setResources(int resources) {
+        this.resources = resources;
+    }
+
+    public int getMyAnts() {
+        return myAnts;
+    }
+
+    public void setMyAnts(int myAnts) {
+        this.myAnts = myAnts;
+    }
+
+    public int getOppAnts() {
+        return oppAnts;
+    }
+
+    public void setOppAnts(int oppAnts) {
+        this.oppAnts = oppAnts;
+    }
+
     @Override
     public String toString() {
         return "Hex{" +
@@ -106,6 +137,9 @@ public class Hex {
                 ", neigh3=" + neigh3 +
                 ", neigh4=" + neigh4 +
                 ", neigh5=" + neigh5 +
+                ", resources=" + resources +
+                ", myAnts=" + myAnts +
+                ", oppAnts=" + oppAnts +
                 '}';
     }
 }
