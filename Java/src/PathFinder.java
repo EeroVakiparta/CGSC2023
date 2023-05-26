@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class Testi {
+public class PathFinder {
     public static List<List<Integer>> findAllShortestPaths(List<Hex> hexagons, Hex startingHex, Hex targetHex) {
         Map<Integer, Hex> hexMap = new HashMap<>();
         for (Hex hex : hexagons) {
@@ -72,7 +72,7 @@ public class Testi {
     public static void main(String[] args) {
         // Example usage
         List<Hex> hexagons = new ArrayList<>();
-        
+
         hexagons.add(new Hex(2, 0, 0, 0, 10, -1, -1, -1, -1, 0, 0, 0, 0));
         hexagons.add(new Hex(8, 0, 0, 18, -1, -1, 10, 0, 6, 0, 0, 0, 0));
         hexagons.add(new Hex(18, 0, 11, 28, -1, -1, 8, 6, -1, 0, 0, 0, 0));
