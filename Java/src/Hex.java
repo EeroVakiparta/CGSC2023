@@ -18,6 +18,7 @@ public class Hex {
     int oppAnts; // the amount of opponent ants on this cell
 
     double value;
+    int distanceToMyBase;
 
     public Hex(int index, int type, int initialResources, int neigh0, int neigh1, int neigh2, int neigh3, int neigh4, int neigh5, int resources, int myAnts, int oppAnts, double value) {
         this.index = index;
@@ -33,6 +34,10 @@ public class Hex {
         this.myAnts = myAnts;
         this.oppAnts = oppAnts;
         this.value = value;
+    }
+
+    public Hex() {
+
     }
 
     public int getIndex() {
@@ -139,6 +144,14 @@ public class Hex {
         this.value = value;
     }
 
+    public int getDistanceToMyBase() {
+        return distanceToMyBase;
+    }
+
+    public void setDistanceToMyBase(int distanceToMyBase) {
+        this.distanceToMyBase = distanceToMyBase;
+    }
+
     @Override
     public String toString() {
         return "Hex{" +
@@ -155,6 +168,7 @@ public class Hex {
                 ", myAnts=" + myAnts +
                 ", oppAnts=" + oppAnts +
                 ", value=" + value +
+                ", distanceToMyBase=" + distanceToMyBase +
                 '}';
     }
 
