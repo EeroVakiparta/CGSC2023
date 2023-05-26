@@ -1,24 +1,25 @@
 import java.util.*;
 
 public class Testi {
-    public static List<Integer> findShortestPath(List<Hex> hexagons, Hex startingHex, Hex targetHex) {
+    public static List<List<Integer>> findAllShortestPaths(List<Hex> hexagons, Hex startingHex, Hex targetHex) {
         Map<Integer, Hex> hexMap = new HashMap<>();
         for (Hex hex : hexagons) {
             hexMap.put(hex.getIndex(), hex);
         }
 
         Map<Integer, Integer> distances = new HashMap<>();
-        Map<Integer, Integer> previous = new HashMap<>();
+        Map<Integer, List<List<Integer>>> paths = new HashMap<>();
         PriorityQueue<Integer> queue = new PriorityQueue<>(Comparator.comparingInt(distances::get));
 
         for (Hex hex : hexagons) {
             int hexIndex = hex.getIndex();
             distances.put(hexIndex, Integer.MAX_VALUE);
-            previous.put(hexIndex, null);
+            paths.put(hexIndex, new ArrayList<>());
         }
 
         int startingIndex = startingHex.getIndex();
         distances.put(startingIndex, 0);
+        paths.get(startingIndex).add(Collections.singletonList(startingIndex));
         queue.add(startingIndex);
 
         while (!queue.isEmpty()) {
@@ -26,7 +27,7 @@ public class Testi {
             Hex currentHex = hexMap.get(currentHexIndex);
 
             if (currentHexIndex == targetHex.getIndex()) {
-                break; // Found the shortest path, exit the loop
+                break; // Found the shortest paths, exit the loop
             }
 
             Integer[] neighbors = {
@@ -43,40 +44,47 @@ public class Testi {
                     Hex neighborHex = hexMap.get(neighborIndex);
                     int distance = distances.get(currentHexIndex) + 1; // Assuming each connection has a distance of 1
 
-                    if (distances.get(neighborIndex) == null || distance < distances.get(neighborIndex)) {
+                    if (distance < distances.get(neighborIndex)) {
                         distances.put(neighborIndex, distance);
-                        previous.put(neighborIndex, currentHexIndex);
+                        List<List<Integer>> neighborPaths = paths.get(neighborIndex);
+                        neighborPaths.clear();
+                        for (List<Integer> path : paths.get(currentHexIndex)) {
+                            List<Integer> newPath = new ArrayList<>(path);
+                            newPath.add(neighborIndex);
+                            neighborPaths.add(newPath);
+                        }
                         queue.add(neighborIndex);
+                    } else if (distance == distances.get(neighborIndex)) {
+                        List<List<Integer>> neighborPaths = paths.get(neighborIndex);
+                        for (List<Integer> path : paths.get(currentHexIndex)) {
+                            List<Integer> newPath = new ArrayList<>(path);
+                            newPath.add(neighborIndex);
+                            neighborPaths.add(newPath);
+                        }
                     }
                 }
             }
         }
 
-        List<Integer> shortestPath = new ArrayList<>();
-        Integer currentIndex = targetHex.getIndex();
-
-        while (currentIndex != null) {
-            shortestPath.add(0, currentIndex);
-            currentIndex = previous.get(currentIndex);
-        }
-
-        return shortestPath;
+        return paths.get(targetHex.getIndex());
     }
 
     public static void main(String[] args) {
         // Example usage
         List<Hex> hexagons = new ArrayList<>();
+        
+        hexagons.add(new Hex(2, 0, 0, 0, 10, -1, -1, -1, -1, 0, 0, 0, 0));
         hexagons.add(new Hex(8, 0, 0, 18, -1, -1, 10, 0, 6, 0, 0, 0, 0));
-        hexagons.add(new Hex(28, 0, 21, -1, -1, -1, 18, -1, -1, 0, 0, 0, 0));
         hexagons.add(new Hex(18, 0, 11, 28, -1, -1, 8, 6, -1, 0, 0, 0, 0));
         hexagons.add(new Hex(0, 0, 0, 6, 8, 10, -1, -1, -1, 0, 0, 0, 0));
         hexagons.add(new Hex(6, 0, 42, 18, 8, 0, -1, -1, -1, 0, 0, 0, 0));
+        hexagons.add(new Hex(28, 0, 21, -1, -1, -1, 18, -1, -1, 0, 0, 0, 0));
         hexagons.add(new Hex(10, 0, 0, 8, -1, -1, -1, -1, 0, 0, 0, 0, 0));
 
-        Hex startingHex = hexagons.get(0);
-        Hex targetHex = hexagons.get(1);
+        Hex startingHex = hexagons.get(2);
+        Hex targetHex = hexagons.get(3);
 
-        List<Integer> shortestPath = findShortestPath(hexagons, startingHex, targetHex);
-        System.out.println("Shortest path: " + shortestPath);
+        List<List<Integer>> shortestPaths = findAllShortestPaths(hexagons, startingHex, targetHex);
+        System.out.println("Shortest paths: " + shortestPaths);
     }
 }
