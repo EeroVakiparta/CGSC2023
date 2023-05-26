@@ -22,7 +22,7 @@ class Player {
             int neigh3 = in.nextInt();
             int neigh4 = in.nextInt();
             int neigh5 = in.nextInt();
-            Hex hex = new Hex(i, type, initialResources, neigh0, neigh1, neigh2, neigh3, neigh4, neigh5, 0, 0, 0);
+            Hex hex = new Hex(i, type, initialResources, neigh0, neigh1, neigh2, neigh3, neigh4, neigh5, 0, 0, 0, 0);
             hexList.add(hex);
         }
         int numberOfBases = in.nextInt();
@@ -31,6 +31,14 @@ class Player {
         }
         for (int i = 0; i < numberOfBases; i++) {
             int oppBaseIndex = in.nextInt();
+        }
+
+        //get the hex which has my base on it
+        Hex myBaseHex = new Hex (0,0,0,0,0,0,0,0,0,0,0,0,0);
+        for (Hex hex : hexList) {
+            if (hex.getIndex() == myBaseIndex) {
+                myBaseHex = hex;
+            }
         }
 
         // game loop
@@ -51,8 +59,9 @@ class Player {
 
             }
 
-            // Write an action using System.out.println()
-            // To debug: System.err.println("Debug messages...");
+
+
+
 
             //if resources is zero remove from list
             for (int i = 0; i < hexList.size(); i++) {
@@ -61,18 +70,115 @@ class Player {
                 }
             }
 
-            int strength = 10 / hexList.size();
 
 
-            String output = "";
+
+
+
+            int eggs = 0;
+            int crystals = 0;
             for (Hex hex : hexList) {
-                if (hex.getResources() > 0) {
-                    //put LINE on hex commands and separate with ;
-                    output += "LINE " + myBaseIndex + " " + hex.getIndex() + " " + strength + ";";
+                if (hex.getType() == 1) {
+                    eggs++;
+                } else if (hex.getType() == 2) {
+                    crystals++;
+                }
+            }
+            //if eggs is greater than crystals
+            if(eggs > crystals) {
+                //remove eggs from list which are not neighbours with my base
+                for (int i = 0; i < hexList.size(); i++) {
+                    if (hexList.get(i).getType() == 1 && !Helpers.isNeighbour(myBaseHex, hexList.get(i))) {
+                        hexList.remove(i);
+                    }
                 }
             }
 
-            if(hexList.isEmpty()){
+            int strength = 1;
+
+            //make list of neighbours
+            List<Hex> neighbours = new ArrayList<>();
+            //make list of all neighbours neighbours
+            List<Hex> neighboursNeighbours = new ArrayList<>();
+
+            //check if any hex is neighbours with my base using helper method in Helpers
+            for (Hex hex : hexList) {
+                //check if hex has resources
+                if (hex.getResources() == 0) {
+                    continue;
+                }
+
+                if (Helpers.isNeighbour(myBaseHex, hex)) {
+                    System.err.println("Found N1 " + hex.getIndex());
+                    double currnetValue = hex.getValue();
+                    neighbours.add(hex);
+                    hex.setValue(currnetValue + 10);
+                } else if (Helpers.isNeighBoursNeighbour(myBaseHex, hex)) {
+                    System.err.println("Found N2 " + hex.getIndex());
+                    double currnetValue = hex.getValue();
+                    neighboursNeighbours.add(hex);
+                    hex.setValue(currnetValue + 5);
+                } else {
+                    hex.setValue(strength);
+                }
+            }
+
+            //make Hex list for output
+            List<Hex> hexListForOutput = new ArrayList<>();
+
+            //check if hex has eggs
+            for (Hex hex : hexList) {
+                if (hex.getType() == 1) {
+                    hexListForOutput.add(hex);
+                }
+            }
+
+
+            //if neightbous is not empty use as output
+            if (!neighbours.isEmpty()) {
+                hexListForOutput = neighbours;
+            } else if (!neighboursNeighbours.isEmpty()) {
+                hexListForOutput = neighboursNeighbours;
+            } else {
+                //combine hexList and neighbours
+                hexList.addAll(neighbours);
+                hexListForOutput = hexList;
+
+            }
+
+            //for each hex in hexListForOutput add 1 to value for each 10 resources on it
+            for (Hex hex : hexListForOutput) {
+                if (hex.getResources() > 0) {
+                    int strenght = (int) (hex.getValue() + (hex.getResources() / 10));
+                    double currnetValue = hex.getValue();
+                    hex.setValue(currnetValue + strenght);
+                }
+            }
+
+            //if there is more than 3 hexes in hexListForOutput remove the one with the lowest value
+            if (hexListForOutput.size() > 3) {
+                double lowestValue = 1000;
+                int lowestValueIndex = 0;
+                for (int i = 0; i < hexListForOutput.size(); i++) {
+                    if (hexListForOutput.get(i).getValue() < lowestValue) {
+                        lowestValue = hexListForOutput.get(i).getValue();
+                        lowestValueIndex = i;
+                    }
+                }
+                hexListForOutput.remove(lowestValueIndex);
+            }
+
+
+            String output = "";
+            for (Hex hex : hexListForOutput) {
+                if (hex.getResources() > 0) {
+                    int strenght = (int) (hex.getValue());
+                    //put LINE on hex commands and separate with ;
+                    output += "LINE " + myBaseIndex + " " + hex.getIndex() + " " + strenght + ";";
+                }
+            }
+
+            if(hexListForOutput.isEmpty()){
                 System.out.println("WAIT");
             }else{
                 System.out.println(output);
