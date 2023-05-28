@@ -1,6 +1,8 @@
+import java.awt.*;
 import java.util.*;
 import java.io.*;
 import java.math.*;
+import java.util.List;
 
 /**
  * Auto-generated code below aims at helping you parse
@@ -8,27 +10,11 @@ import java.math.*;
  **/
 public class Player {
 
-    //Kirjotetaanpa uusiksi.
-    //Edellisestä yrityksestä hyviä löytöjä:
-    // - LINE tekee huonoja valintoja jos on useampi yhtä pitkä reitti
-    // - Munia ei kannata kerätä loppuun asti, jos resurssit on jo muutenkin vähissä
-    // - ehkei kaikkia murkkuja kannata levittää vaan käyttää muutamaa lonkeroa aluksi ja lisätä kun murkkuja tulee lisää
-    // - Älä lankea -1 bugiin :D Muista että -1 on no neighbour
-
-    //Uuteen versioon TODO:
-    // Lisää kartta luokka
-    // total crystals total
-    // total eggs
-    // Joku syy lopettaa munien kerääminen
-    // Joku raja targeteille. Esim murkut /5
-    // silloin 10 /5 = 2
-    // 20/5 = 4
-    // 60/5 = 12
-    // esto sille ettei tuu huonoja laneja
-    // lyhin reittihaku ? Pitäiskö tehä reittejä ja tallentaa ne ettei tartte aina laskee
-    // Ton Linen käyttö vähän mauton. Paras tehä oma.
-
     public static void main(String args[]) {
+        List<Hex> hexes = new ArrayList<>();
+        //home hexes
+        int myBaseIndex = 0;
+        GameState gameState = new GameState();
         Scanner in = new Scanner(System.in);
         int numberOfCells = in.nextInt(); // amount of hexagonal cells in this map
         for (int i = 0; i < numberOfCells; i++) {
@@ -40,29 +26,92 @@ public class Player {
             int neigh3 = in.nextInt();
             int neigh4 = in.nextInt();
             int neigh5 = in.nextInt();
+            // initial hexes
+            Hex hex = new Hex(i, type, initialResources, neigh0, neigh1, neigh2, neigh3, neigh4, neigh5, 0, 0, 0, 0);
+            hexes.add(hex);
+            if(type == 1){
+                gameState.setInitialEggs(gameState.getInitialEggs() + initialResources);
+            }else if(type == 2){
+                gameState.setInitialCrystals(gameState.getInitialCrystals() + initialResources);
+            }
         }
+        //System.err.println("initialEggs: " + gameState.getInitialEggs());
+        //System.err.println("initialCrystals: " + gameState.getInitialCrystals());
+
+        gameState.setTotalEggs(gameState.getInitialEggs());
+        gameState.setTotalCrystals(gameState.getInitialCrystals());
+        Hex homeHex = hexes.get(myBaseIndex);
+
+        ///// BASES /////
         int numberOfBases = in.nextInt();
+        System.err.println("numberOfBases: " + numberOfBases);
         for (int i = 0; i < numberOfBases; i++) {
-            int myBaseIndex = in.nextInt();
+            myBaseIndex = in.nextInt();
         }
         for (int i = 0; i < numberOfBases; i++) {
             int oppBaseIndex = in.nextInt();
         }
-
-        // game loop
+        int homeBaseIndex = myBaseIndex;  // this propably changes in higher levels to more than one base
+        int turn = 0;
+        /////// GAME LOOP ///////
         while (true) {
+            System.err.println("turn: " + turn);
+            Helpers.resetState(gameState);
             for (int i = 0; i < numberOfCells; i++) {
                 int resources = in.nextInt(); // the current amount of eggs/crystals on this cell
                 int myAnts = in.nextInt(); // the amount of your ants on this cell
                 int oppAnts = in.nextInt(); // the amount of opponent ants on this cell
+
+                // update hexes
+                Hex hex = hexes.get(i);
+                hex.setResources(resources);
+                hex.setMyAnts(myAnts);
+                hex.setOppAnts(oppAnts);
+                //count total crystals and eggs, (they are reseted to 0 every turn)
+                if (hex.getType() == 1) {
+                    gameState.setTotalEggs(gameState.getTotalEggs() + resources);
+                } else if (hex.getType() == 2) {
+                    gameState.setTotalCrystals(gameState.getTotalCrystals() + resources);
+                }
+                //count ants
+                gameState.setMyAnts(gameState.getMyAnts() + myAnts);
+                gameState.setOpponentAnts(gameState.getOpponentAnts() + oppAnts);
             }
 
-            // Write an action using System.out.println()
-            // To debug: System.err.println("Debug messages...");
+            //Figure out how many targets is good to approach. Depends on the number of ants. Should not spread out too thin
+            int maxOptimalTargetsCount = Helpers.getMaxOptimalTargetsCount(gameState);
 
+            //Now lets find the best targets
+            Map<Hex, List<Hex>> filteredOptimalTargets = Helpers.getOptimalTargets(gameState, hexes, maxOptimalTargetsCount, homeBaseIndex);
 
-            // WAIT | LINE <sourceIdx> <targetIdx> <strength> | BEACON <cellIdx> <strength> | MESSAGE <text>
-            System.out.println("WAIT");
+            //Now populate with BEACONs. The command is BEACON <cellIdx> <strength> and is separated by ;
+            //Collect all filteredOptimalTargets and build a string from the indexes of the hexes
+            StringBuilder beaconString = new StringBuilder();
+            //Add LINE command to the string LINE index1 index2 strength
+//            for (Map.Entry<Hex, List<Hex>> entry : filteredOptimalTargets.entrySet()) {
+//                beaconString.append("LINE ").append(homeBaseIndex).append(" ").append(entry.getKey().getIndex()).append(" 1;");
+//            }
+            System.err.println("Building beacon string from " + filteredOptimalTargets.size() + " targets and " + maxOptimalTargetsCount + " max targets");
+            for (Map.Entry<Hex, List<Hex>> entry : filteredOptimalTargets.entrySet()) {
+
+                //iterate through the list of hexes and add them to the string
+                System.err.println("Adding hexes to beacon string" + entry.getValue().size());
+                for (Hex hex : entry.getValue()) {
+                    // BEACON <cellIdx> <strength> and is separated by ; strength is 1 for now but do not end with ;
+                    beaconString.append("BEACON ").append(hex.getIndex()).append(" 1;");
+                }
+            }
+
+            //remove last ; from string
+            //beaconString.deleteCharAt(beaconString.length() - 1);
+            System.out.println(beaconString);
+
+            //if optimalTargets is empty print WAIT
+            if (filteredOptimalTargets.isEmpty()) {
+                System.out.print("WAIT;MESSAGE no optimal targets;");
+            }
+
+            turn++;
         }
     }
 }

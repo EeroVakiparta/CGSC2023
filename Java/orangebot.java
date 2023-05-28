@@ -1,4 +1,4 @@
-//Bundle uploaded at 05/28/2023 12:35:57
+//Bundle uploaded at 05/28/2023 13:23:14
 import java.util.*;
 import java.util.stream.Collectors;
 class GameState {
@@ -67,7 +67,7 @@ class GameState {
     }
 }
 class Helpers {
-        static int dividerForAntTargets = 5;
+        static int dividerForAntTargets = 5; // has worked with 5(rank 400 wood1)
        //Idea with this is to limit spreading ants too thin
         public static int getMaxOptimalTargetsCount(GameState state) {
             int targets = 0;
@@ -82,6 +82,17 @@ class Helpers {
             state.setMyAnts(0);
             state.setOpponentAnts(0);
         }
+        //method takes a hex and returns an array of integers of the neighbours of the hex
+        public static int[] getNeighbours(Hex hex) {
+            int[] neighbours = new int[6];
+            neighbours[0] = hex.getNeigh0();
+            neighbours[1] = hex.getNeigh1();
+            neighbours[2] = hex.getNeigh2();
+            neighbours[3] = hex.getNeigh3();
+            neighbours[4] = hex.getNeigh4();
+            neighbours[5] = hex.getNeigh5();
+            return neighbours;
+        }
         //get shortest path using PathFinder between two hexes and if there is more than one shortest path, return the one with most resources on the way or most own ants on the way
         public static List<Hex> getShortestPath(List<Hex> hexagons, Hex startingHex, Hex targetHex) {
             List<List<Hex>> allShortestPaths = PathFinder.findAllShortestPaths(hexagons, startingHex, targetHex);
@@ -90,6 +101,7 @@ class Helpers {
     public static Map<Hex, List<Hex>> getOptimalTargets(GameState gameState, List<Hex> hexes, int maxOptimalTargetsCount, int homeBaseIndex) {
             //get all hexes with crystal resources
             List<Hex> crystalHexes = new ArrayList<>();
+            boolean eggsCloseToBaseFocus = false;
             for (Hex hex : hexes) {
                 if (hex.getType() == 2 && hex.getResources() > 0) {
                     crystalHexes.add(hex);
@@ -109,12 +121,32 @@ class Helpers {
             boolean stopCollectingEggs = isMostOfCrystalsHarvested(gameState);
             Map<Hex, List<Hex>> optimalTargetHexesWithPaths = new HashMap<>();
             if(!stopCollectingEggs){ /// IF WE ARE NOT IN ENDGAME
+                int eggCount = 0;
                 Map<Hex, List<Hex>> eggShortestPaths = new HashMap<>();
-                for (Hex eggHex : eggHexes) {
-                    List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
-                    if (shortestPath.size() <= 4) {
-                        System.err.println("found egg close to base" + eggHex.getIndex());
-                        eggShortestPaths.put(eggHex, shortestPath);
+                //TODO: this close to base can be made faster and in one for loop
+                int[] neighbours = getNeighbours(hexes.get(homeBaseIndex));
+                for (int neighbourIndex : neighbours) {
+                    if (neighbourIndex != -1) {
+                        Hex neighbourHex = hexes.get(neighbourIndex);
+                        if (neighbourHex.getType() == 1 && neighbourHex.getResources() > 0) {
+                            System.err.println("found egg NEXT to base" + neighbourHex.getIndex());
+                            List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), neighbourHex);
+                            eggShortestPaths.put(neighbourHex, shortestPath);
+                            if(neighbourHex.getResources() > neighbourHex.getMyAnts()){
+                                eggsCloseToBaseFocus = true;
+                            }
+                        }
+                    }
+                }
+                if(!eggsCloseToBaseFocus) {
+                    for (Hex eggHex : eggHexes) {
+                        List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
+                        if (shortestPath.size() <= 4) {
+                            System.err.println("found egg close to base" + eggHex.getIndex());
+                            if(eggHex.getResources() > eggHex.getMyAnts()){
+                                eggShortestPaths.put(eggHex, shortestPath);
+                            }
+                        }
                     }
                 }
                 if(eggShortestPaths.size() > 0) {
@@ -163,7 +195,7 @@ class Helpers {
             return sortedOptimalTargetHexesWithPathsPicks;
     }
     public static boolean isMostOfCrystalsHarvested(GameState gameState){
-        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2;
+        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 1.5;
         if(mostOfCrystalsHarvested){
             System.err.println("MOST OF CRYSTALS HARVESTED");
         }
@@ -448,6 +480,7 @@ class Player {
         //System.err.println("initialCrystals: " + gameState.getInitialCrystals());
         gameState.setTotalEggs(gameState.getInitialEggs());
         gameState.setTotalCrystals(gameState.getInitialCrystals());
+        Hex homeHex = hexes.get(myBaseIndex);
         ///// BASES /////
         int numberOfBases = in.nextInt();
         System.err.println("numberOfBases: " + numberOfBases);
