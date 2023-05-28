@@ -93,12 +93,12 @@ public class Player {
 //            }
             System.err.println("Building beacon string from " + filteredOptimalTargets.size() + " targets and " + maxOptimalTargetsCount + " max targets");
             for (Map.Entry<Hex, List<Hex>> entry : filteredOptimalTargets.entrySet()) {
-
+                Hex targetHex = entry.getKey();
                 //iterate through the list of hexes and add them to the string
                 System.err.println("Adding hexes to beacon string" + entry.getValue().size());
                 for (Hex hex : entry.getValue()) {
-                    // BEACON <cellIdx> <strength> and is separated by ; strength is 1 for now but do not end with ;
-                    beaconString.append("BEACON ").append(hex.getIndex()).append(" 1;");
+                    // BEACON <cellIdx> <strength> and is separated by ; strength is hex.getValue for now but do not end with ;
+                    beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(targetHex.getValue()).append(";");
                 }
             }
 

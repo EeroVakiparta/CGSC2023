@@ -1,4 +1,4 @@
-//Bundle uploaded at 05/28/2023 13:44:55
+//Bundle uploaded at 05/28/2023 20:45:01
 import java.util.*;
 import java.util.stream.Collectors;
 class GameState {
@@ -9,6 +9,8 @@ class GameState {
     int myAnts;
     int opponentAnts;
     int strategy = 0; //0 = eggs, 1 = rush, 2 = ??
+    int eggsValue = 10;
+    int crystalValue = 1;
     public GameState(int initialCrystals, int initialEggs, int totalCrystals, int totalEggs, int myAnts, int opponentAnts) {
         this.initialCrystals = initialCrystals;
         this.initialEggs = initialEggs;
@@ -61,6 +63,18 @@ class GameState {
     public void setStrategy(int strategy) {
         this.strategy = strategy;
     }
+    public int getEggsValue() {
+        return eggsValue;
+    }
+    public void setEggsValue(int eggsValue) {
+        this.eggsValue = eggsValue;
+    }
+    public int getCrystalValue() {
+        return crystalValue;
+    }
+    public void setCrystalValue(int crystalValue) {
+        this.crystalValue = crystalValue;
+    }
     @Override
     public String toString() {
         return "GameState{" +
@@ -71,6 +85,8 @@ class GameState {
                 ", myAnts=" + myAnts +
                 ", opponentAnts=" + opponentAnts +
                 ", strategy=" + strategy +
+                ", eggsValue=" + eggsValue +
+                ", crystalValue=" + crystalValue +
                 '}';
     }
 }
@@ -139,7 +155,9 @@ class Helpers {
                         if (neighbourHex.getType() == 1 && neighbourHex.getResources() > 0) {
                             System.err.println("found egg NEXT to base" + neighbourHex.getIndex());
                             List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), neighbourHex);
+                            neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue());
                             eggShortestPaths.put(neighbourHex, shortestPath);
+                            System.err.println("shortestPath: " + shortestPath.get(0) + " " + shortestPath.get(1));
                             if(neighbourHex.getResources() > neighbourHex.getMyAnts()){
                                 eggsCloseToBaseFocus = true;
                             }
@@ -149,11 +167,10 @@ class Helpers {
                 if(!eggsCloseToBaseFocus) {
                     for (Hex eggHex : eggHexes) {
                         List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
-                        if (shortestPath.size() <= 4) {
+                        if (shortestPath.size() <= 6) {
                             System.err.println("found egg close to base" + eggHex.getIndex());
-                            if(eggHex.getResources() > eggHex.getMyAnts()){
-                                eggShortestPaths.put(eggHex, shortestPath);
-                            }
+                            eggHex.setValue(eggHex.getResources() * gameState.getEggsValue());
+                            eggShortestPaths.put(eggHex, shortestPath);
                         }
                     }
                 }
@@ -166,6 +183,7 @@ class Helpers {
                     Map<Hex, List<Hex>> crystalShortestPaths = new HashMap<>();
                     for (Hex crystalHex : crystalHexes) {
                         List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), crystalHex);
+                        crystalHex.setValue(crystalHex.getResources() * gameState.getCrystalValue());
                         crystalShortestPaths.put(crystalHex, shortestPath);
                     }
                     //get the shortest path to each crystal and add the shortest path to optimalTargets
@@ -177,6 +195,7 @@ class Helpers {
                 Map<Hex, List<Hex>> crystalShortestPaths = new HashMap<>();
                 for (Hex crystalHex : crystalHexes) {
                     List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), crystalHex);
+                    crystalHex.setValue(crystalHex.getResources() * gameState.getCrystalValue());
                     crystalShortestPaths.put(crystalHex, shortestPath);
                 }
                 //get the shortest path to each crystal and add the shortest path to optimalTargets
@@ -203,14 +222,9 @@ class Helpers {
             return sortedOptimalTargetHexesWithPathsPicks;
     }
     public static boolean isMostOfCrystalsHarvested(GameState gameState){
-        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2;
+        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2 ;
         if(mostOfCrystalsHarvested){
             System.err.println("MOST OF CRYSTALS HARVESTED");
-            gameState.strategy = 1;
-        }
-        if(gameState.getMyAnts() > gameState.getOpponentAnts() * 1.5){
-            System.err.println("MUCH MORE ANTS THAN OPPONENT");
-            gameState.strategy = 1;
         }
         return mostOfCrystalsHarvested;
     }
@@ -257,9 +271,9 @@ class Hex {
     int resources;// the current amount of eggs/crystals on this cell
     int myAnts; // the amount of your ants on this cell
     int oppAnts; // the amount of opponent ants on this cell
-    double value;
+    int value;
     int distanceToMyBase;
-    public Hex(int index, int type, int initialResources, int neigh0, int neigh1, int neigh2, int neigh3, int neigh4, int neigh5, int resources, int myAnts, int oppAnts, double value) {
+    public Hex(int index, int type, int initialResources, int neigh0, int neigh1, int neigh2, int neigh3, int neigh4, int neigh5, int resources, int myAnts, int oppAnts, int value) {
         this.index = index;
         this.type = type;
         this.initialResources = initialResources;
@@ -348,10 +362,10 @@ class Hex {
     public void setOppAnts(int oppAnts) {
         this.oppAnts = oppAnts;
     }
-    public double getValue() {
+    public int getValue() {
         return value;
     }
-    public void setValue(double value) {
+    public void setValue(int value) {
         this.value = value;
     }
     public int getDistanceToMyBase() {
@@ -541,11 +555,12 @@ class Player {
 //            }
             System.err.println("Building beacon string from " + filteredOptimalTargets.size() + " targets and " + maxOptimalTargetsCount + " max targets");
             for (Map.Entry<Hex, List<Hex>> entry : filteredOptimalTargets.entrySet()) {
+                Hex targetHex = entry.getKey();
                 //iterate through the list of hexes and add them to the string
                 System.err.println("Adding hexes to beacon string" + entry.getValue().size());
                 for (Hex hex : entry.getValue()) {
-                    // BEACON <cellIdx> <strength> and is separated by ; strength is 1 for now but do not end with ;
-                    beaconString.append("BEACON ").append(hex.getIndex()).append(" 1;");
+                    // BEACON <cellIdx> <strength> and is separated by ; strength is hex.getValue for now but do not end with ;
+                    beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(targetHex.getValue()).append(";");
                 }
             }
             //remove last ; from string
