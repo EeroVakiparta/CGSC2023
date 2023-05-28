@@ -9,6 +9,8 @@ public class GameState {
     int myAnts;
     int opponentAnts;
 
+    int strategy = 0; //0 = eggs, 1 = rush, 2 = ??
+
     public GameState(int initialCrystals, int initialEggs, int totalCrystals, int totalEggs, int myAnts, int opponentAnts) {
         this.initialCrystals = initialCrystals;
         this.initialEggs = initialEggs;
@@ -70,6 +72,14 @@ public class GameState {
         this.opponentAnts = opponentAnts;
     }
 
+    public int getStrategy() {
+        return strategy;
+    }
+
+    public void setStrategy(int strategy) {
+        this.strategy = strategy;
+    }
+
     @Override
     public String toString() {
         return "GameState{" +
@@ -79,6 +89,7 @@ public class GameState {
                 ", totalEggs=" + totalEggs +
                 ", myAnts=" + myAnts +
                 ", opponentAnts=" + opponentAnts +
+                ", strategy=" + strategy +
                 '}';
     }
 }

@@ -1,4 +1,4 @@
-//Bundle uploaded at 05/28/2023 13:23:14
+//Bundle uploaded at 05/28/2023 13:44:55
 import java.util.*;
 import java.util.stream.Collectors;
 class GameState {
@@ -8,6 +8,7 @@ class GameState {
     int totalEggs;
     int myAnts;
     int opponentAnts;
+    int strategy = 0; //0 = eggs, 1 = rush, 2 = ??
     public GameState(int initialCrystals, int initialEggs, int totalCrystals, int totalEggs, int myAnts, int opponentAnts) {
         this.initialCrystals = initialCrystals;
         this.initialEggs = initialEggs;
@@ -54,6 +55,12 @@ class GameState {
     public void setOpponentAnts(int opponentAnts) {
         this.opponentAnts = opponentAnts;
     }
+    public int getStrategy() {
+        return strategy;
+    }
+    public void setStrategy(int strategy) {
+        this.strategy = strategy;
+    }
     @Override
     public String toString() {
         return "GameState{" +
@@ -63,6 +70,7 @@ class GameState {
                 ", totalEggs=" + totalEggs +
                 ", myAnts=" + myAnts +
                 ", opponentAnts=" + opponentAnts +
+                ", strategy=" + strategy +
                 '}';
     }
 }
@@ -149,7 +157,7 @@ class Helpers {
                         }
                     }
                 }
-                if(eggShortestPaths.size() > 0) {
+                if(eggShortestPaths.size() > 0 && gameState.strategy == 0) {
                     //if there is eggs close to base, then should focus on collecting them first. Range is 3 hexes from base
                     //get the shortest path to each egg and add the shortest path to optimalTargets
                     optimalTargetHexesWithPaths.putAll(eggShortestPaths);
@@ -195,9 +203,14 @@ class Helpers {
             return sortedOptimalTargetHexesWithPathsPicks;
     }
     public static boolean isMostOfCrystalsHarvested(GameState gameState){
-        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 1.5;
+        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2;
         if(mostOfCrystalsHarvested){
             System.err.println("MOST OF CRYSTALS HARVESTED");
+            gameState.strategy = 1;
+        }
+        if(gameState.getMyAnts() > gameState.getOpponentAnts() * 1.5){
+            System.err.println("MUCH MORE ANTS THAN OPPONENT");
+            gameState.strategy = 1;
         }
         return mostOfCrystalsHarvested;
     }

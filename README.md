@@ -35,5 +35,5 @@ Add turn counter ( 100turns loppuu)
 Voittaa jos on puolet krystalleista itellä, tähän joku temppu
 Älä tuhlaa vuoroa jo resuja on vähemmän ku murkkuja
 
-Implement target value !!!!! 
+Implement target value !!!!! Esim häviän aina jos siellä joku 500resurssi node
 

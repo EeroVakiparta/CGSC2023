@@ -90,13 +90,14 @@ public class Helpers {
                             System.err.println("found egg close to base" + eggHex.getIndex());
                             if(eggHex.getResources() > eggHex.getMyAnts()){
                                 eggShortestPaths.put(eggHex, shortestPath);
+
                             }
 
                         }
                     }
                 }
 
-                if(eggShortestPaths.size() > 0) {
+                if(eggShortestPaths.size() > 0 && gameState.strategy == 0) {
                     //if there is eggs close to base, then should focus on collecting them first. Range is 3 hexes from base
                     //get the shortest path to each egg and add the shortest path to optimalTargets
                     optimalTargetHexesWithPaths.putAll(eggShortestPaths);
@@ -149,9 +150,14 @@ public class Helpers {
     }
 
     public static boolean isMostOfCrystalsHarvested(GameState gameState){
-        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 1.5;
+        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2;
         if(mostOfCrystalsHarvested){
             System.err.println("MOST OF CRYSTALS HARVESTED");
+            gameState.strategy = 1;
+        }
+        if(gameState.getMyAnts() > gameState.getOpponentAnts() * 1.5){
+            System.err.println("MUCH MORE ANTS THAN OPPONENT");
+            gameState.strategy = 1;
         }
         return mostOfCrystalsHarvested;
     }
