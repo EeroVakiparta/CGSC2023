@@ -92,13 +92,28 @@ public class Player {
 //                beaconString.append("LINE ").append(homeBaseIndex).append(" ").append(entry.getKey().getIndex()).append(" 1;");
 //            }
             System.err.println("Building beacon string from " + filteredOptimalTargets.size() + " targets and " + maxOptimalTargetsCount + " max targets");
-            for (Map.Entry<Hex, List<Hex>> entry : filteredOptimalTargets.entrySet()) {
-                Hex targetHex = entry.getKey();
+
+            //reverse filteredOptimalTargets
+            Map<Hex, List<Hex>> reversedFilteredOptimalTargets = new LinkedHashMap<>();
+            List<Hex> reversedHexes = new ArrayList<>(filteredOptimalTargets.keySet());
+            Collections.reverse(reversedHexes);
+            for (Hex hex : reversedHexes) {
+                reversedFilteredOptimalTargets.put(hex, filteredOptimalTargets.get(hex));
+            }
+
+
+            for (Map.Entry<Hex, List<Hex>> entry : reversedFilteredOptimalTargets.entrySet()) {
+                Hex startHex = entry.getKey();
                 //iterate through the list of hexes and add them to the string
                 System.err.println("Adding hexes to beacon string" + entry.getValue().size());
                 for (Hex hex : entry.getValue()) {
                     // BEACON <cellIdx> <strength> and is separated by ; strength is hex.getValue for now but do not end with ;
-                    beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(targetHex.getValue()).append(";");
+                    //if the hex is the last in the list change the BEACON to BEACONLAST
+                    if (hex.equals(entry.getValue().get(entry.getValue().size() - 1))) {
+                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append((int)(startHex.getValue() * 1.0)).append(";");
+                    }else{
+                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(startHex.getValue()).append(";");
+                    }
                 }
             }
 

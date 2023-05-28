@@ -10,7 +10,7 @@ public class GameState {
     int opponentAnts;
 
     int strategy = 0; //0 = eggs, 1 = rush, 2 = ??
-    int eggsValue = 10;
+    int eggsValue = 100;
     int crystalValue = 1;
 
     public GameState(int initialCrystals, int initialEggs, int totalCrystals, int totalEggs, int myAnts, int opponentAnts) {
