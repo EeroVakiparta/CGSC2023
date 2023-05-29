@@ -148,13 +148,23 @@ public class Helpers {
 
     }
 
-    public static boolean isMostOfCrystalsHarvested(GameState gameState){
-        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2.5 ;
+    public static boolean areMostOfCrystalsHarvested(GameState gameState){
+        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2 ;
         if(mostOfCrystalsHarvested){
             System.err.println("MOST OF CRYSTALS HARVESTED");
         }
         return mostOfCrystalsHarvested;
     }
+
+    public static boolean isGameRunningOutOfTurns(GameState gameState){
+        boolean gameRunningOutOfTurns = gameState.getTurn() > 50;
+        if(gameRunningOutOfTurns){
+            System.err.println("GAME RUNNING OUT OF TURNS");
+        }
+        return gameRunningOutOfTurns;
+    }
+
+
 
         //get a list of list of hexes. And return the list of hexes with most resources on the way or most own ants on the way (do not include starting and target hexes)
         public static List<Hex> getShortestPathWithMostResources(List<List<Hex>> allShortestPaths) {

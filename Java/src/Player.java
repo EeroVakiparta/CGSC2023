@@ -56,6 +56,7 @@ public class Player {
         /////// GAME LOOP ///////
         while (true) {
             System.err.println("turn: " + turn);
+            gameState.setTurn(turn);
             Helpers.resetState(gameState);
             for (int i = 0; i < numberOfCells; i++) {
                 int resources = in.nextInt(); // the current amount of eggs/crystals on this cell
