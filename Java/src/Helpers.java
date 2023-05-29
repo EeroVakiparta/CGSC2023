@@ -110,6 +110,7 @@ public class Helpers {
                 }
 
 
+                if (!eggNextToBase) {
                     for (Hex eggHex : eggHexes) {
                         List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
                         if (shortestPath.size() <= 4) {
@@ -117,9 +118,9 @@ public class Helpers {
                             eggHex.setValue(eggHex.getResources() * gameState.getEggsValue() / shortestPath.size() );
                             eggShortestPaths.put(eggHex, shortestPath);
 
-
                         }
                     }
+                }
 
                 optimalTargetHexesWithPaths.putAll(eggShortestPaths);
             }
@@ -131,8 +132,16 @@ public class Helpers {
                 Map<Hex, List<Hex>> crystalShortestPaths = new HashMap<>();
                 for (Hex crystalHex : crystalHexes) {
                     List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), crystalHex);
-                    crystalHex.setValue(crystalHex.getResources() * gameState.getCrystalValue() / shortestPath.size());
-                    crystalShortestPaths.put(crystalHex, shortestPath);
+                    if(shortestPath.size() <= 4 && !isGameRunningOutOfTurns){
+                        System.err.println("found crystal close to base" + crystalHex.getIndex());
+                        crystalHex.setValue(crystalHex.getResources() / 10);
+                        crystalShortestPaths.put(crystalHex, shortestPath);
+                    }else {
+                        System.err.println("found crystal far from base" + crystalHex.getIndex());
+                        crystalHex.setValue(crystalHex.getResources() * gameState.getCrystalValue() / shortestPath.size());
+                        crystalShortestPaths.put(crystalHex, shortestPath);
+                    }
+
                 }
                 //get the shortest path to each crystal and add the shortest path to optimalTargets
                 optimalTargetHexesWithPaths.putAll(crystalShortestPaths);
