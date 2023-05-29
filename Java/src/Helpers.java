@@ -64,72 +64,79 @@ public class Helpers {
             boolean stopCollectingEggs = areMostOfCrystalsHarvested(gameState);
             boolean isGameRunningOutOfTurns = isGameRunningOutOfTurns(gameState);
             if(stopCollectingEggs){
+                System.err.println("stopCollectingEggs");
                 gameState.setEggsValue(1);
-                gameState.setCrystalValue(100);
+                gameState.setCrystalValue(2);
             }
             if(isGameRunningOutOfTurns){
+                System.err.println("GameRunningOutOfTurns");
                 gameState.setEggsValue(1);
-                gameState.setCrystalValue(100);
+                gameState.setCrystalValue(2);
             }
             if(gameState.totalCrystals < gameState.totalEggs){
+                System.err.println("totalCrystals < totalEggs");
                 gameState.setEggsValue(1);
-                gameState.setCrystalValue(100);
+                gameState.setCrystalValue(2);
             }
 
 
             Map<Hex, List<Hex>> optimalTargetHexesWithPaths = new HashMap<>();
 
+            boolean eggNextToBase = false;
+            if(!stopCollectingEggs) {
+                int eggCount = 0;
+                Map<Hex, List<Hex>> eggShortestPaths = new HashMap<>();
 
+                //TODO: this close to base can be made faster and in one for loop
+                int[] neighbours = getNeighbours(hexes.get(homeBaseIndex));
 
-            int eggCount = 0;
-            Map<Hex, List<Hex>> eggShortestPaths = new HashMap<>();
+                for (int neighbourIndex : neighbours) {
+                    if (neighbourIndex != -1) {
+                        Hex neighbourHex = hexes.get(neighbourIndex);
+                        if (neighbourHex.getType() == 1 && neighbourHex.getResources() > 0) {
+                            System.err.println("found egg NEXT to base" + neighbourHex.getIndex());
+                            List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), neighbourHex);
+                            if(neighbourHex.getResources() > neighbourHex.getMyAnts()){
+                                neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() + 9999);
 
-            //TODO: this close to base can be made faster and in one for loop
-            int[] neighbours = getNeighbours(hexes.get(homeBaseIndex));
-            for (int neighbourIndex : neighbours) {
-                if (neighbourIndex != -1) {
-                    Hex neighbourHex = hexes.get(neighbourIndex);
-                    if (neighbourHex.getType() == 1 && neighbourHex.getResources() > 0) {
-                        System.err.println("found egg NEXT to base" + neighbourHex.getIndex());
-                        List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), neighbourHex);
-                        if(neighbourHex.getResources() > neighbourHex.getMyAnts()){
-                            neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() + 9999);
-                        }else {
-                            neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue());
+                            }else {
+                                neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() );
+                            }
+                            eggNextToBase = true;
+                            eggShortestPaths.put(neighbourHex, shortestPath);
+
                         }
-
-                        eggShortestPaths.put(neighbourHex, shortestPath);
-
                     }
                 }
+
+
+                    for (Hex eggHex : eggHexes) {
+                        List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
+                        if (shortestPath.size() <= 4) {
+                            System.err.println("found egg close to base" + eggHex.getIndex());
+                            eggHex.setValue(eggHex.getResources() * gameState.getEggsValue() / shortestPath.size() );
+                            eggShortestPaths.put(eggHex, shortestPath);
+
+
+                        }
+                    }
+
+                optimalTargetHexesWithPaths.putAll(eggShortestPaths);
             }
-
-
-                for (Hex eggHex : eggHexes) {
-                    List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
-                    if (shortestPath.size() <= 4) {
-                        System.err.println("found egg close to base" + eggHex.getIndex());
-                        eggHex.setValue(eggHex.getResources() * gameState.getEggsValue() / shortestPath.size());
-                        eggShortestPaths.put(eggHex, shortestPath);
-
-
-                    }
-                }
-
-            optimalTargetHexesWithPaths.putAll(eggShortestPaths);
-
             //if only some amount of crystals left then should stop collecting eggs and only collect crystals
             //if there is no eggs close to base, then should focus on collecting crystals. First should collect crystals that are close to base
+            if(!eggNextToBase) {
 
-            Map<Hex, List<Hex>> crystalShortestPaths = new HashMap<>();
-            for (Hex crystalHex : crystalHexes) {
-                List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), crystalHex);
-                crystalHex.setValue(crystalHex.getResources() * gameState.getCrystalValue() / shortestPath.size());
-                crystalShortestPaths.put(crystalHex, shortestPath);
+
+                Map<Hex, List<Hex>> crystalShortestPaths = new HashMap<>();
+                for (Hex crystalHex : crystalHexes) {
+                    List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), crystalHex);
+                    crystalHex.setValue(crystalHex.getResources() * gameState.getCrystalValue() / shortestPath.size());
+                    crystalShortestPaths.put(crystalHex, shortestPath);
+                }
+                //get the shortest path to each crystal and add the shortest path to optimalTargets
+                optimalTargetHexesWithPaths.putAll(crystalShortestPaths);
             }
-            //get the shortest path to each crystal and add the shortest path to optimalTargets
-            optimalTargetHexesWithPaths.putAll(crystalShortestPaths);
-
             //System.err out all the optimal target hex indexes and their values
             for (Map.Entry<Hex, List<Hex>> entry : optimalTargetHexesWithPaths.entrySet()) {
                 System.err.println("optimalTargetHexesWithPaths: " + entry.getKey().getIndex() + " " + entry.getKey().getValue());
