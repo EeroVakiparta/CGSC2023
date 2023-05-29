@@ -37,3 +37,5 @@ Voittaa jos on puolet krystalleista itellä, tähän joku temppu
 
 Implement target value !!!!! Esim häviän aina jos siellä joku 500resurssi node
 
+Murkku pathing ei toimi. Keksi jotenki painottaa alku ja loppu hexaa
+

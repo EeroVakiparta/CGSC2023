@@ -61,9 +61,19 @@ public class Helpers {
             //if there is eggs close to base, then should focus on collecting them first. Range is 3 hexes from base
             //if there is no eggs close to base, then should focus on collecting crystals. First should collect crystals that are close to base
 
-            boolean stopCollectingEggs = isMostOfCrystalsHarvested(gameState);
+            boolean stopCollectingEggs = areMostOfCrystalsHarvested(gameState);
+            boolean isGameRunningOutOfTurns = isGameRunningOutOfTurns(gameState);
             if(stopCollectingEggs){
-                gameState.setEggsValue(0);
+                gameState.setEggsValue(1);
+                gameState.setCrystalValue(100);
+            }
+            if(isGameRunningOutOfTurns){
+                gameState.setEggsValue(1);
+                gameState.setCrystalValue(100);
+            }
+            if(gameState.totalCrystals < gameState.totalEggs){
+                gameState.setEggsValue(1);
+                gameState.setCrystalValue(100);
             }
 
 
@@ -82,17 +92,19 @@ public class Helpers {
                     if (neighbourHex.getType() == 1 && neighbourHex.getResources() > 0) {
                         System.err.println("found egg NEXT to base" + neighbourHex.getIndex());
                         List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), neighbourHex);
-
-                        neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() / shortestPath.size());
-                        eggShortestPaths.put(neighbourHex, shortestPath);
                         if(neighbourHex.getResources() > neighbourHex.getMyAnts()){
-                            eggsCloseToBaseFocus = true;
+                            neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() + 9999);
+                        }else {
+                            neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue());
                         }
+
+                        eggShortestPaths.put(neighbourHex, shortestPath);
+
                     }
                 }
             }
 
-            if(!eggsCloseToBaseFocus) {
+
                 for (Hex eggHex : eggHexes) {
                     List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
                     if (shortestPath.size() <= 4) {
@@ -103,12 +115,12 @@ public class Helpers {
 
                     }
                 }
-            }
+
             optimalTargetHexesWithPaths.putAll(eggShortestPaths);
 
             //if only some amount of crystals left then should stop collecting eggs and only collect crystals
             //if there is no eggs close to base, then should focus on collecting crystals. First should collect crystals that are close to base
-        if(!eggsCloseToBaseFocus) {
+
             Map<Hex, List<Hex>> crystalShortestPaths = new HashMap<>();
             for (Hex crystalHex : crystalHexes) {
                 List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), crystalHex);
@@ -117,7 +129,7 @@ public class Helpers {
             }
             //get the shortest path to each crystal and add the shortest path to optimalTargets
             optimalTargetHexesWithPaths.putAll(crystalShortestPaths);
-        }
+
             //System.err out all the optimal target hex indexes and their values
             for (Map.Entry<Hex, List<Hex>> entry : optimalTargetHexesWithPaths.entrySet()) {
                 System.err.println("optimalTargetHexesWithPaths: " + entry.getKey().getIndex() + " " + entry.getKey().getValue());

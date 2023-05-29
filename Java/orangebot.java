@@ -1,95 +1,6 @@
-//Bundle uploaded at 05/28/2023 22:02:07
+// Bundle uploaded at Mon May 29 07:35:18 EEST 2023
 import java.util.*;
 import java.util.stream.Collectors;
-class GameState {
-    int initialCrystals;
-    int initialEggs;
-    int totalCrystals;
-    int totalEggs;
-    int myAnts;
-    int opponentAnts;
-    int strategy = 0; //0 = eggs, 1 = rush, 2 = ??
-    int eggsValue = 100;
-    int crystalValue = 1;
-    public GameState(int initialCrystals, int initialEggs, int totalCrystals, int totalEggs, int myAnts, int opponentAnts) {
-        this.initialCrystals = initialCrystals;
-        this.initialEggs = initialEggs;
-        this.totalCrystals = totalCrystals;
-        this.totalEggs = totalEggs;
-        this.myAnts = myAnts;
-        this.opponentAnts = opponentAnts;
-    }
-    public GameState() {
-    }
-    public int getInitialCrystals() {
-        return initialCrystals;
-    }
-    public void setInitialCrystals(int initialCrystals) {
-        this.initialCrystals = initialCrystals;
-    }
-    public int getInitialEggs() {
-        return initialEggs;
-    }
-    public void setInitialEggs(int initialEggs) {
-        this.initialEggs = initialEggs;
-    }
-    public int getTotalCrystals() {
-        return totalCrystals;
-    }
-    public void setTotalCrystals(int totalCrystals) {
-        this.totalCrystals = totalCrystals;
-    }
-    public int getTotalEggs() {
-        return totalEggs;
-    }
-    public void setTotalEggs(int totalEggs) {
-        this.totalEggs = totalEggs;
-    }
-    public int getMyAnts() {
-        return myAnts;
-    }
-    public void setMyAnts(int myAnts) {
-        this.myAnts = myAnts;
-    }
-    public int getOpponentAnts() {
-        return opponentAnts;
-    }
-    public void setOpponentAnts(int opponentAnts) {
-        this.opponentAnts = opponentAnts;
-    }
-    public int getStrategy() {
-        return strategy;
-    }
-    public void setStrategy(int strategy) {
-        this.strategy = strategy;
-    }
-    public int getEggsValue() {
-        return eggsValue;
-    }
-    public void setEggsValue(int eggsValue) {
-        this.eggsValue = eggsValue;
-    }
-    public int getCrystalValue() {
-        return crystalValue;
-    }
-    public void setCrystalValue(int crystalValue) {
-        this.crystalValue = crystalValue;
-    }
-    @Override
-    public String toString() {
-        return "GameState{" +
-                "initialCrystals=" + initialCrystals +
-                ", initialEggs=" + initialEggs +
-                ", totalCrystals=" + totalCrystals +
-                ", totalEggs=" + totalEggs +
-                ", myAnts=" + myAnts +
-                ", opponentAnts=" + opponentAnts +
-                ", strategy=" + strategy +
-                ", eggsValue=" + eggsValue +
-                ", crystalValue=" + crystalValue +
-                '}';
-    }
-}
 class Helpers {
         static int dividerForAntTargets = 5; // has worked with 5(rank 400 wood1)
        //Idea with this is to limit spreading ants too thin
@@ -142,9 +53,19 @@ class Helpers {
             //I think of making an endgame switch. If only some amount of crystals left then should stop collecting eggs and only collect crystals
             //if there is eggs close to base, then should focus on collecting them first. Range is 3 hexes from base
             //if there is no eggs close to base, then should focus on collecting crystals. First should collect crystals that are close to base
-            boolean stopCollectingEggs = isMostOfCrystalsHarvested(gameState);
+            boolean stopCollectingEggs = areMostOfCrystalsHarvested(gameState);
+            boolean isGameRunningOutOfTurns = isGameRunningOutOfTurns(gameState);
             if(stopCollectingEggs){
-                gameState.setEggsValue(0);
+                gameState.setEggsValue(1);
+                gameState.setCrystalValue(100);
+            }
+            if(isGameRunningOutOfTurns){
+                gameState.setEggsValue(1);
+                gameState.setCrystalValue(100);
+            }
+            if(gameState.totalCrystals < gameState.totalEggs){
+                gameState.setEggsValue(1);
+                gameState.setCrystalValue(100);
             }
             Map<Hex, List<Hex>> optimalTargetHexesWithPaths = new HashMap<>();
             int eggCount = 0;
@@ -157,15 +78,15 @@ class Helpers {
                     if (neighbourHex.getType() == 1 && neighbourHex.getResources() > 0) {
                         System.err.println("found egg NEXT to base" + neighbourHex.getIndex());
                         List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), neighbourHex);
-                        neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() / shortestPath.size());
-                        eggShortestPaths.put(neighbourHex, shortestPath);
                         if(neighbourHex.getResources() > neighbourHex.getMyAnts()){
-                            eggsCloseToBaseFocus = true;
+                            neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() + 9999);
+                        }else {
+                            neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue());
                         }
+                        eggShortestPaths.put(neighbourHex, shortestPath);
                     }
                 }
             }
-            if(!eggsCloseToBaseFocus) {
                 for (Hex eggHex : eggHexes) {
                     List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
                     if (shortestPath.size() <= 4) {
@@ -174,11 +95,9 @@ class Helpers {
                         eggShortestPaths.put(eggHex, shortestPath);
                     }
                 }
-            }
             optimalTargetHexesWithPaths.putAll(eggShortestPaths);
             //if only some amount of crystals left then should stop collecting eggs and only collect crystals
             //if there is no eggs close to base, then should focus on collecting crystals. First should collect crystals that are close to base
-        if(!eggsCloseToBaseFocus) {
             Map<Hex, List<Hex>> crystalShortestPaths = new HashMap<>();
             for (Hex crystalHex : crystalHexes) {
                 List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), crystalHex);
@@ -187,7 +106,6 @@ class Helpers {
             }
             //get the shortest path to each crystal and add the shortest path to optimalTargets
             optimalTargetHexesWithPaths.putAll(crystalShortestPaths);
-        }
             //System.err out all the optimal target hex indexes and their values
             for (Map.Entry<Hex, List<Hex>> entry : optimalTargetHexesWithPaths.entrySet()) {
                 System.err.println("optimalTargetHexesWithPaths: " + entry.getKey().getIndex() + " " + entry.getKey().getValue());
@@ -212,12 +130,19 @@ class Helpers {
             }
             return sortedOptimalTargetHexesWithPathsPicks;
     }
-    public static boolean isMostOfCrystalsHarvested(GameState gameState){
-        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2.5 ;
+    public static boolean areMostOfCrystalsHarvested(GameState gameState){
+        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2 ;
         if(mostOfCrystalsHarvested){
             System.err.println("MOST OF CRYSTALS HARVESTED");
         }
         return mostOfCrystalsHarvested;
+    }
+    public static boolean isGameRunningOutOfTurns(GameState gameState){
+        boolean gameRunningOutOfTurns = gameState.getTurn() > 50;
+        if(gameRunningOutOfTurns){
+            System.err.println("GAME RUNNING OUT OF TURNS");
+        }
+        return gameRunningOutOfTurns;
     }
         //get a list of list of hexes. And return the list of hexes with most resources on the way or most own ants on the way (do not include starting and target hexes)
         public static List<Hex> getShortestPathWithMostResources(List<List<Hex>> allShortestPaths) {
@@ -389,6 +314,120 @@ class Hex {
         return Arrays.asList(neigh0, neigh1, neigh2, neigh3, neigh4, neigh5);
     }
 }
+/**
+ * Auto-generated code below aims at helping you parse
+ * the standard input according to the problem statement.
+ **/
+class Player {
+    public static void main(String args[]) {
+        List<Hex> hexes = new ArrayList<>();
+        //home hexes
+        int myBaseIndex = 0;
+        GameState gameState = new GameState();
+        Scanner in = new Scanner(System.in);
+        int numberOfCells = in.nextInt(); // amount of hexagonal cells in this map
+        for (int i = 0; i < numberOfCells; i++) {
+            int type = in.nextInt(); // 0 for empty, 1 for eggs, 2 for crystal
+            int initialResources = in.nextInt(); // the initial amount of eggs/crystals on this cell
+            int neigh0 = in.nextInt(); // the index of the neighbouring cell for each direction
+            int neigh1 = in.nextInt();
+            int neigh2 = in.nextInt();
+            int neigh3 = in.nextInt();
+            int neigh4 = in.nextInt();
+            int neigh5 = in.nextInt();
+            // initial hexes
+            Hex hex = new Hex(i, type, initialResources, neigh0, neigh1, neigh2, neigh3, neigh4, neigh5, 0, 0, 0, 0);
+            hexes.add(hex);
+            if(type == 1){
+                gameState.setInitialEggs(gameState.getInitialEggs() + initialResources);
+            }else if(type == 2){
+                gameState.setInitialCrystals(gameState.getInitialCrystals() + initialResources);
+            }
+        }
+        //System.err.println("initialEggs: " + gameState.getInitialEggs());
+        //System.err.println("initialCrystals: " + gameState.getInitialCrystals());
+        gameState.setTotalEggs(gameState.getInitialEggs());
+        gameState.setTotalCrystals(gameState.getInitialCrystals());
+        Hex homeHex = hexes.get(myBaseIndex);
+        ///// BASES /////
+        int numberOfBases = in.nextInt();
+        System.err.println("numberOfBases: " + numberOfBases);
+        for (int i = 0; i < numberOfBases; i++) {
+            myBaseIndex = in.nextInt();
+        }
+        for (int i = 0; i < numberOfBases; i++) {
+            int oppBaseIndex = in.nextInt();
+        }
+        int homeBaseIndex = myBaseIndex;  // this propably changes in higher levels to more than one base
+        int turn = 0;
+        /////// GAME LOOP ///////
+        while (true) {
+            System.err.println("turn: " + turn);
+            gameState.setTurn(turn);
+            Helpers.resetState(gameState);
+            for (int i = 0; i < numberOfCells; i++) {
+                int resources = in.nextInt(); // the current amount of eggs/crystals on this cell
+                int myAnts = in.nextInt(); // the amount of your ants on this cell
+                int oppAnts = in.nextInt(); // the amount of opponent ants on this cell
+                // update hexes
+                Hex hex = hexes.get(i);
+                hex.setResources(resources);
+                hex.setMyAnts(myAnts);
+                hex.setOppAnts(oppAnts);
+                //count total crystals and eggs, (they are reseted to 0 every turn)
+                if (hex.getType() == 1) {
+                    gameState.setTotalEggs(gameState.getTotalEggs() + resources);
+                } else if (hex.getType() == 2) {
+                    gameState.setTotalCrystals(gameState.getTotalCrystals() + resources);
+                }
+                //count ants
+                gameState.setMyAnts(gameState.getMyAnts() + myAnts);
+                gameState.setOpponentAnts(gameState.getOpponentAnts() + oppAnts);
+            }
+            //Figure out how many targets is good to approach. Depends on the number of ants. Should not spread out too thin
+            int maxOptimalTargetsCount = Helpers.getMaxOptimalTargetsCount(gameState);
+            //Now lets find the best targets
+            Map<Hex, List<Hex>> filteredOptimalTargets = Helpers.getOptimalTargets(gameState, hexes, maxOptimalTargetsCount, homeBaseIndex);
+            //Now populate with BEACONs. The command is BEACON <cellIdx> <strength> and is separated by ;
+            //Collect all filteredOptimalTargets and build a string from the indexes of the hexes
+            StringBuilder beaconString = new StringBuilder();
+            //Add LINE command to the string LINE index1 index2 strength
+//            for (Map.Entry<Hex, List<Hex>> entry : filteredOptimalTargets.entrySet()) {
+//                beaconString.append("LINE ").append(homeBaseIndex).append(" ").append(entry.getKey().getIndex()).append(" 1;");
+//            }
+            System.err.println("Building beacon string from " + filteredOptimalTargets.size() + " targets and " + maxOptimalTargetsCount + " max targets");
+            //reverse filteredOptimalTargets
+            Map<Hex, List<Hex>> reversedFilteredOptimalTargets = new LinkedHashMap<>();
+            List<Hex> reversedHexes = new ArrayList<>(filteredOptimalTargets.keySet());
+            Collections.reverse(reversedHexes);
+            for (Hex hex : reversedHexes) {
+                reversedFilteredOptimalTargets.put(hex, filteredOptimalTargets.get(hex));
+            }
+            for (Map.Entry<Hex, List<Hex>> entry : reversedFilteredOptimalTargets.entrySet()) {
+                Hex startHex = entry.getKey();
+                //iterate through the list of hexes and add them to the string
+                System.err.println("Adding hexes to beacon string" + entry.getValue().size());
+                for (Hex hex : entry.getValue()) {
+                    // BEACON <cellIdx> <strength> and is separated by ; strength is hex.getValue for now but do not end with ;
+                    //if the hex is the last in the list change the BEACON to BEACONLAST
+                    if (hex.equals(entry.getValue().get(entry.getValue().size() - 1))) {
+                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append((int)(startHex.getValue() * 1.0)).append(";");
+                    }else{
+                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(startHex.getValue()).append(";");
+                    }
+                }
+            }
+            //remove last ; from string
+            //beaconString.deleteCharAt(beaconString.length() - 1);
+            System.out.println(beaconString);
+            //if optimalTargets is empty print WAIT
+            if (filteredOptimalTargets.isEmpty()) {
+                System.out.print("WAIT;MESSAGE no optimal targets;");
+            }
+            turn++;
+        }
+    }
+}
 class PathFinder {
     public static List<List<Hex>> findAllShortestPaths(List<Hex> hexagons, Hex startingHex, Hex targetHex) {
         Map<Integer, Hex> hexMap = new HashMap<>();
@@ -464,116 +503,100 @@ class PathFinder {
         System.out.println("Shortest paths: " + shortestPaths);
     }*/
 }
-/**
- * Auto-generated code below aims at helping you parse
- * the standard input according to the problem statement.
- **/
-class Player {
-    public static void main(String args[]) {
-        List<Hex> hexes = new ArrayList<>();
-        //home hexes
-        int myBaseIndex = 0;
-        GameState gameState = new GameState();
-        Scanner in = new Scanner(System.in);
-        int numberOfCells = in.nextInt(); // amount of hexagonal cells in this map
-        for (int i = 0; i < numberOfCells; i++) {
-            int type = in.nextInt(); // 0 for empty, 1 for eggs, 2 for crystal
-            int initialResources = in.nextInt(); // the initial amount of eggs/crystals on this cell
-            int neigh0 = in.nextInt(); // the index of the neighbouring cell for each direction
-            int neigh1 = in.nextInt();
-            int neigh2 = in.nextInt();
-            int neigh3 = in.nextInt();
-            int neigh4 = in.nextInt();
-            int neigh5 = in.nextInt();
-            // initial hexes
-            Hex hex = new Hex(i, type, initialResources, neigh0, neigh1, neigh2, neigh3, neigh4, neigh5, 0, 0, 0, 0);
-            hexes.add(hex);
-            if(type == 1){
-                gameState.setInitialEggs(gameState.getInitialEggs() + initialResources);
-            }else if(type == 2){
-                gameState.setInitialCrystals(gameState.getInitialCrystals() + initialResources);
-            }
-        }
-        //System.err.println("initialEggs: " + gameState.getInitialEggs());
-        //System.err.println("initialCrystals: " + gameState.getInitialCrystals());
-        gameState.setTotalEggs(gameState.getInitialEggs());
-        gameState.setTotalCrystals(gameState.getInitialCrystals());
-        Hex homeHex = hexes.get(myBaseIndex);
-        ///// BASES /////
-        int numberOfBases = in.nextInt();
-        System.err.println("numberOfBases: " + numberOfBases);
-        for (int i = 0; i < numberOfBases; i++) {
-            myBaseIndex = in.nextInt();
-        }
-        for (int i = 0; i < numberOfBases; i++) {
-            int oppBaseIndex = in.nextInt();
-        }
-        int homeBaseIndex = myBaseIndex;  // this propably changes in higher levels to more than one base
-        int turn = 0;
-        /////// GAME LOOP ///////
-        while (true) {
-            System.err.println("turn: " + turn);
-            Helpers.resetState(gameState);
-            for (int i = 0; i < numberOfCells; i++) {
-                int resources = in.nextInt(); // the current amount of eggs/crystals on this cell
-                int myAnts = in.nextInt(); // the amount of your ants on this cell
-                int oppAnts = in.nextInt(); // the amount of opponent ants on this cell
-                // update hexes
-                Hex hex = hexes.get(i);
-                hex.setResources(resources);
-                hex.setMyAnts(myAnts);
-                hex.setOppAnts(oppAnts);
-                //count total crystals and eggs, (they are reseted to 0 every turn)
-                if (hex.getType() == 1) {
-                    gameState.setTotalEggs(gameState.getTotalEggs() + resources);
-                } else if (hex.getType() == 2) {
-                    gameState.setTotalCrystals(gameState.getTotalCrystals() + resources);
-                }
-                //count ants
-                gameState.setMyAnts(gameState.getMyAnts() + myAnts);
-                gameState.setOpponentAnts(gameState.getOpponentAnts() + oppAnts);
-            }
-            //Figure out how many targets is good to approach. Depends on the number of ants. Should not spread out too thin
-            int maxOptimalTargetsCount = Helpers.getMaxOptimalTargetsCount(gameState);
-            //Now lets find the best targets
-            Map<Hex, List<Hex>> filteredOptimalTargets = Helpers.getOptimalTargets(gameState, hexes, maxOptimalTargetsCount, homeBaseIndex);
-            //Now populate with BEACONs. The command is BEACON <cellIdx> <strength> and is separated by ;
-            //Collect all filteredOptimalTargets and build a string from the indexes of the hexes
-            StringBuilder beaconString = new StringBuilder();
-            //Add LINE command to the string LINE index1 index2 strength
-//            for (Map.Entry<Hex, List<Hex>> entry : filteredOptimalTargets.entrySet()) {
-//                beaconString.append("LINE ").append(homeBaseIndex).append(" ").append(entry.getKey().getIndex()).append(" 1;");
-//            }
-            System.err.println("Building beacon string from " + filteredOptimalTargets.size() + " targets and " + maxOptimalTargetsCount + " max targets");
-            //reverse filteredOptimalTargets
-            Map<Hex, List<Hex>> reversedFilteredOptimalTargets = new LinkedHashMap<>();
-            List<Hex> reversedHexes = new ArrayList<>(filteredOptimalTargets.keySet());
-            Collections.reverse(reversedHexes);
-            for (Hex hex : reversedHexes) {
-                reversedFilteredOptimalTargets.put(hex, filteredOptimalTargets.get(hex));
-            }
-            for (Map.Entry<Hex, List<Hex>> entry : reversedFilteredOptimalTargets.entrySet()) {
-                Hex startHex = entry.getKey();
-                //iterate through the list of hexes and add them to the string
-                System.err.println("Adding hexes to beacon string" + entry.getValue().size());
-                for (Hex hex : entry.getValue()) {
-                    // BEACON <cellIdx> <strength> and is separated by ; strength is hex.getValue for now but do not end with ;
-                    //if the hex is the last in the list change the BEACON to BEACONLAST
-                    if (hex.equals(entry.getValue().get(entry.getValue().size() - 1))) {
-                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append((int)(startHex.getValue() * 1.0)).append(";");
-                    }else{
-                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(startHex.getValue()).append(";");
-                    }
-                }
-            }
-            //remove last ; from string
-            //beaconString.deleteCharAt(beaconString.length() - 1);
-            System.out.println(beaconString);
-            //if optimalTargets is empty print WAIT
-            if (filteredOptimalTargets.isEmpty()) {
-                System.out.print("WAIT;MESSAGE no optimal targets;");
-            }
-            turn++;
-        }
+class GameState {
+    int initialCrystals;
+    int initialEggs;
+    int totalCrystals;
+    int totalEggs;
+    int myAnts;
+    int opponentAnts;
+    int strategy = 0; //0 = eggs, 1 = rush, 2 = ??
+    int eggsValue = 100;
+    int crystalValue = 1;
+    int turn = 0;
+    public GameState(int initialCrystals, int initialEggs, int totalCrystals, int totalEggs, int myAnts, int opponentAnts) {
+        this.initialCrystals = initialCrystals;
+        this.initialEggs = initialEggs;
+        this.totalCrystals = totalCrystals;
+        this.totalEggs = totalEggs;
+        this.myAnts = myAnts;
+        this.opponentAnts = opponentAnts;
+    }
+    public GameState() {
+    }
+    public int getInitialCrystals() {
+        return initialCrystals;
+    }
+    public void setInitialCrystals(int initialCrystals) {
+        this.initialCrystals = initialCrystals;
+    }
+    public int getInitialEggs() {
+        return initialEggs;
+    }
+    public void setInitialEggs(int initialEggs) {
+        this.initialEggs = initialEggs;
+    }
+    public int getTotalCrystals() {
+        return totalCrystals;
+    }
+    public void setTotalCrystals(int totalCrystals) {
+        this.totalCrystals = totalCrystals;
+    }
+    public int getTotalEggs() {
+        return totalEggs;
+    }
+    public void setTotalEggs(int totalEggs) {
+        this.totalEggs = totalEggs;
+    }
+    public int getMyAnts() {
+        return myAnts;
+    }
+    public void setMyAnts(int myAnts) {
+        this.myAnts = myAnts;
+    }
+    public int getOpponentAnts() {
+        return opponentAnts;
+    }
+    public void setOpponentAnts(int opponentAnts) {
+        this.opponentAnts = opponentAnts;
+    }
+    public int getStrategy() {
+        return strategy;
+    }
+    public void setStrategy(int strategy) {
+        this.strategy = strategy;
+    }
+    public int getEggsValue() {
+        return eggsValue;
+    }
+    public void setEggsValue(int eggsValue) {
+        this.eggsValue = eggsValue;
+    }
+    public int getCrystalValue() {
+        return crystalValue;
+    }
+    public void setCrystalValue(int crystalValue) {
+        this.crystalValue = crystalValue;
+    }
+    public int getTurn() {
+        return turn;
+    }
+    public void setTurn(int turn) {
+        this.turn = turn;
+    }
+    @Override
+    public String toString() {
+        return "GameState{" +
+                "initialCrystals=" + initialCrystals +
+                ", initialEggs=" + initialEggs +
+                ", totalCrystals=" + totalCrystals +
+                ", totalEggs=" + totalEggs +
+                ", myAnts=" + myAnts +
+                ", opponentAnts=" + opponentAnts +
+                ", strategy=" + strategy +
+                ", eggsValue=" + eggsValue +
+                ", crystalValue=" + crystalValue +
+                ", turn=" + turn +
+                '}';
     }
 }

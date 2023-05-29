@@ -111,7 +111,7 @@ public class Player {
                     // BEACON <cellIdx> <strength> and is separated by ; strength is hex.getValue for now but do not end with ;
                     //if the hex is the last in the list change the BEACON to BEACONLAST
                     if (hex.equals(entry.getValue().get(entry.getValue().size() - 1))) {
-                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append((int)(startHex.getValue() * 1.0)).append(";");
+                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append((int)(startHex.getValue() * 1.1)).append(";");
                     }else{
                         beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(startHex.getValue()).append(";");
                     }
