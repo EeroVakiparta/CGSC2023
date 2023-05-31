@@ -44,14 +44,20 @@ public class Player {
 
         ///// BASES /////
         int numberOfBases = in.nextInt();
+        // int array of myBaseIndex
+        int[] myBaseIndexes = new int[numberOfBases];
+        int[] oppBaseIndexes = new int[numberOfBases];
         System.err.println("numberOfBases: " + numberOfBases);
         for (int i = 0; i < numberOfBases; i++) {
             myBaseIndex = in.nextInt();
+            myBaseIndexes[i] = myBaseIndex;
         }
         for (int i = 0; i < numberOfBases; i++) {
             int oppBaseIndex = in.nextInt();
+            oppBaseIndexes[i] = oppBaseIndex;
         }
-        int homeBaseIndex = myBaseIndex;  // this propably changes in higher levels to more than one base
+        //int homeBaseIndex = myBaseIndex;  // this propably changes in higher levels to more than one base
+
         int turn = 0;
         /////// GAME LOOP ///////
         while (true) {
@@ -79,51 +85,54 @@ public class Player {
                 gameState.setOpponentAnts(gameState.getOpponentAnts() + oppAnts);
             }
 
-            //Figure out how many targets is good to approach. Depends on the number of ants. Should not spread out too thin
+            // Define an array or list to store the home base indexes
+
+//Figure out how many targets is good to approach. Depends on the number of ants. Should not spread out too thin
             int maxOptimalTargetsCount = Helpers.getMaxOptimalTargetsCount(gameState);
 
-            //Now lets find the best targets
-            Map<Hex, List<Hex>> filteredOptimalTargets = Helpers.getOptimalTargets(gameState, hexes, maxOptimalTargetsCount, homeBaseIndex);
-
-            //Now populate with BEACONs. The command is BEACON <cellIdx> <strength> and is separated by ;
-            //Collect all filteredOptimalTargets and build a string from the indexes of the hexes
-            StringBuilder beaconString = new StringBuilder();
-            //Add LINE command to the string LINE index1 index2 strength
-//            for (Map.Entry<Hex, List<Hex>> entry : filteredOptimalTargets.entrySet()) {
-//                beaconString.append("LINE ").append(homeBaseIndex).append(" ").append(entry.getKey().getIndex()).append(" 1;");
-//            }
-            System.err.println("Building beacon string from " + filteredOptimalTargets.size() + " targets and " + maxOptimalTargetsCount + " max targets");
-
-            //reverse filteredOptimalTargets
-            Map<Hex, List<Hex>> reversedFilteredOptimalTargets = new LinkedHashMap<>();
-            List<Hex> reversedHexes = new ArrayList<>(filteredOptimalTargets.keySet());
-            Collections.reverse(reversedHexes);
-            for (Hex hex : reversedHexes) {
-                reversedFilteredOptimalTargets.put(hex, filteredOptimalTargets.get(hex));
+//Now let's find the best targets for each home base index
+            Map<Integer, Map<Hex, List<Hex>>> filteredOptimalTargetsMap = new HashMap<>();
+            for (int baseIndex : myBaseIndexes) {
+                Map<Hex, List<Hex>> filteredOptimalTargets = Helpers.getOptimalTargets(gameState, hexes, maxOptimalTargetsCount, baseIndex);
+                filteredOptimalTargetsMap.put(baseIndex, filteredOptimalTargets);
             }
 
+            StringBuilder beaconString = new StringBuilder();
+            System.err.println("Building beacon string from " + maxOptimalTargetsCount + " max targets");
 
-            for (Map.Entry<Hex, List<Hex>> entry : reversedFilteredOptimalTargets.entrySet()) {
-                Hex startHex = entry.getKey();
-                //iterate through the list of hexes and add them to the string
-                System.err.println("Adding hexes to beacon string" + entry.getValue().size());
-                for (Hex hex : entry.getValue()) {
-                    // BEACON <cellIdx> <strength> and is separated by ; strength is hex.getValue for now but do not end with ;
-                    //if the hex is the last in the list change the BEACON to BEACONLAST
-                    if (hex.equals(entry.getValue().get(entry.getValue().size() - 1))) {
-                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append((int)(startHex.getValue() * 1.1)).append(";");
-                    }else{
-                        beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(startHex.getValue()).append(";");
+            for (int baseIndex : myBaseIndexes) {
+                Map<Hex, List<Hex>> filteredOptimalTargets = filteredOptimalTargetsMap.get(baseIndex);
+                // Reverse filteredOptimalTargets
+                Map<Hex, List<Hex>> reversedFilteredOptimalTargets = new LinkedHashMap<>();
+                List<Hex> reversedHexes = new ArrayList<>(filteredOptimalTargets.keySet());
+                Collections.reverse(reversedHexes);
+                for (Hex hex : reversedHexes) {
+                    reversedFilteredOptimalTargets.put(hex, filteredOptimalTargets.get(hex));
+                }
+
+                for (Map.Entry<Hex, List<Hex>> entry : reversedFilteredOptimalTargets.entrySet()) {
+                    Hex startHex = entry.getKey();
+                    //iterate through the list of hexes and add them to the string
+                    System.err.println("Adding hexes to beacon string" + entry.getValue().size());
+                    for (Hex hex : entry.getValue()) {
+                        // BEACON <cellIdx> <strength> and is separated by ; strength is hex.getValue for now but do not end with ;
+                        //if the hex is the last in the list change the BEACON to BEACONLAST
+                        if (hex.equals(entry.getValue().get(entry.getValue().size() - 1))) {
+                            beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append((int) (startHex.getValue() * 1.1)).append(";");
+                        } else {
+                            beaconString.append("BEACON ").append(hex.getIndex()).append(" ").append(startHex.getValue()).append(";");
+                        }
                     }
                 }
             }
+
 
             //remove last ; from string
             //beaconString.deleteCharAt(beaconString.length() - 1);
             System.out.println(beaconString);
 
             //if optimalTargets is empty print WAIT
-            if (filteredOptimalTargets.isEmpty()) {
+            if (beaconString == null || beaconString.length() == 0) {
                 System.out.print("WAIT;MESSAGE no optimal targets;");
             }
 

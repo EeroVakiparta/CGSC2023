@@ -56,10 +56,6 @@ public class Helpers {
                     eggHexes.add(hex);
                 }
             }
-            //here should find the best targets and return top 3 or 4 or 5 depending on maxOptimalTargetsCount
-            //I think of making an endgame switch. If only some amount of crystals left then should stop collecting eggs and only collect crystals
-            //if there is eggs close to base, then should focus on collecting them first. Range is 3 hexes from base
-            //if there is no eggs close to base, then should focus on collecting crystals. First should collect crystals that are close to base
 
             boolean stopCollectingEggs = areMostOfCrystalsHarvested(gameState);
             boolean isGameRunningOutOfTurns = isGameRunningOutOfTurns(gameState);
@@ -124,8 +120,7 @@ public class Helpers {
 
                 optimalTargetHexesWithPaths.putAll(eggShortestPaths);
             }
-            //if only some amount of crystals left then should stop collecting eggs and only collect crystals
-            //if there is no eggs close to base, then should focus on collecting crystals. First should collect crystals that are close to base
+
             if(!eggNextToBase) {
 
 
