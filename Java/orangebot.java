@@ -108,6 +108,19 @@ class Helpers {
             //round down to nearest integer and return targets
             return targets;
         }
+        public static void chekIfThereIsEnoughAntsToCoverPaths(GameState state, Map<Hex, List<Hex>> paths) {
+            //Take all Lists of hexes out of paths and put them in one list-----Map<Hex, List<Hex>>
+            List<Hex> allHexes = new ArrayList<>();
+            for (Map.Entry<Hex, List<Hex>> entry : paths.entrySet()) {
+                allHexes.addAll(entry.getValue());
+            }
+            //put the paths in a set to remove duplicates
+            Set<Hex> uniqueHexes = new HashSet<>(allHexes);
+            //get all ants I have
+            int myAnts = state.getMyAnts();
+            double antsPerHex = myAnts / uniqueHexes.size();
+            System.err.println("possible antsPerHex:" + antsPerHex);
+        }
         public static void resetState(GameState state) {
             state.setTotalCrystals(0);
             state.setTotalEggs(0);
@@ -165,7 +178,8 @@ class Helpers {
             }
             Map<Hex, List<Hex>> optimalTargetHexesWithPaths = new HashMap<>();
             boolean eggNextToBase = false;
-            if(!stopCollectingEggs) {
+            boolean eggsCloseToBase = false;
+            if(!mostOfCrystalsHarvested) {
                 int eggCount = 0;
                 Map<Hex, List<Hex>> eggShortestPaths = new HashMap<>();
                 //TODO: this close to base can be made faster and in one for loop
@@ -177,9 +191,9 @@ class Helpers {
                             System.err.println("found egg NEXT to base" + neighbourHex.getIndex());
                             List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), neighbourHex);
                             if(neighbourHex.getResources() > neighbourHex.getMyAnts()){
-                                neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() + 9999);
+                                neighbourHex.setValue((int) (neighbourHex.getResources() * gameState.getEggsValue() + 9999));
                             }else {
-                                neighbourHex.setValue(neighbourHex.getResources() * gameState.getEggsValue() );
+                                neighbourHex.setValue((int) (neighbourHex.getResources() * gameState.getEggsValue()));
                             }
                             eggNextToBase = true;
                             eggShortestPaths.put(neighbourHex, shortestPath);
@@ -191,7 +205,13 @@ class Helpers {
                         List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), eggHex);
                         if (shortestPath.size() <= 4) {
                             System.err.println("found egg close to base" + eggHex.getIndex());
-                            eggHex.setValue(eggHex.getResources() * gameState.getEggsValue() / shortestPath.size() );
+                            if (isGameRunningOutOfTurns || mostOfCrystalsHarvested) {
+                                eggHex.setValue((int) (eggHex.getResources() * gameState.getEggsValue() / shortestPath.size()));
+                            } else {
+                                // HUOMAA TÄÄLLÄ MAGIC number, siivoa
+                                eggHex.setValue((int) ((eggHex.getResources() * 10) * gameState.getEggsValue() / shortestPath.size()));
+                            }
+                            eggsCloseToBase = true; // lippuvaluet kyl huonoja :< Pitäis vaan kylvää kertoimia.
                             eggShortestPaths.put(eggHex, shortestPath);
                         }
                     }
@@ -202,13 +222,17 @@ class Helpers {
                 Map<Hex, List<Hex>> crystalShortestPaths = new HashMap<>();
                 for (Hex crystalHex : crystalHexes) {
                     List<Hex> shortestPath = getShortestPath(hexes, hexes.get(homeBaseIndex), crystalHex);
-                    if(shortestPath.size() <= 4 && !isGameRunningOutOfTurns){
+                    if(shortestPath.size() <= 4 && !isGameRunningOutOfTurns && !mostOfCrystalsHarvested){
                         System.err.println("found crystal close to base" + crystalHex.getIndex());
                         crystalHex.setValue(crystalHex.getResources() / 10);
                         crystalShortestPaths.put(crystalHex, shortestPath);
                     }else {
                         System.err.println("found crystal far from base" + crystalHex.getIndex());
-                        crystalHex.setValue(crystalHex.getResources() * gameState.getCrystalValue() / shortestPath.size());
+                        if (eggsCloseToBase) {
+                            crystalHex.setValue(crystalHex.getResources() + gameState.getCrystalValue() / shortestPath.size());
+                        } else {
+                            crystalHex.setValue(crystalHex.getResources() * gameState.getCrystalValue() / shortestPath.size());
+                        }
                         crystalShortestPaths.put(crystalHex, shortestPath);
                     }
                 }
@@ -240,14 +264,16 @@ class Helpers {
             return sortedOptimalTargetHexesWithPathsPicks;
     }
     public static boolean areMostOfCrystalsHarvested(GameState gameState){
-        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 2 ;
+        boolean mostOfCrystalsHarvested = gameState.getTotalCrystals() < gameState.getInitialCrystals() / 1.9 ;
         if(mostOfCrystalsHarvested){
             System.err.println("MOST OF CRYSTALS HARVESTED");
         }
         return mostOfCrystalsHarvested;
     }
-    public static boolean isGameRunningOutOfTurns(GameState gameState){
-        boolean gameRunningOutOfTurns = gameState.getTurn() > 50;
+    public static boolean isGameRunningOutOfTurns(GameState gameState, List<Hex> hexes){
+            int maxTheoreticalTurns = (hexes.size() / 2) + (gameState.getInitialCrystals() / (gameState.getInitialEggs()) );
+        boolean gameRunningOutOfTurns = gameState.getTurn() > (maxTheoreticalTurns / 2);
+        System.err.println("maxTheoreticalTurns: " + maxTheoreticalTurns);
         if(gameRunningOutOfTurns){
             System.err.println("GAME RUNNING OUT OF TURNS");
         }

@@ -39,3 +39,14 @@ Implement target value !!!!! Esim häviän aina jos siellä joku 500resurssi nod
 
 Murkku pathing ei toimi. Keksi jotenki painottaa alku ja loppu hexaa
 
+TODO: joku laskuri joka kattoo paremmin riittääkö murkut tasaisesti krystalleille.
+Vois toimia eri tavalla silloin kun ei ole enää munia kartalla (voi luottaa silloin että laskutulos ei muutu seuraavalla kierroksella)
+Vai onko vaan painoarvot huonot
+
+Nyt kun kaukaisempia kristalleja arvostetaan alussa enemmän täytyy katsoa yltääkö niihin edes.
+
+Enemmän smoothimpi transitio. Muutamas pelis murkut menee ees taas kun arvot togglee
+
+munilla ja kristalleilla vois olal joku suhde joka myös vaikuttaa. Esim jos on vaan pari munaa ja kauheesti krystalleja niin munat on todella arvokkaita
+
+

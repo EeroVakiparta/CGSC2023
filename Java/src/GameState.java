@@ -10,7 +10,7 @@ public class GameState {
     int opponentAnts;
 
     int strategy = 0; //0 = eggs, 1 = rush, 2 = ??
-    int eggsValue = 2;
+    double eggsValue = 2.1; // 2 alunperin
     int crystalValue = 1;
 
     int turn = 0;
@@ -84,7 +84,7 @@ public class GameState {
         this.strategy = strategy;
     }
 
-    public int getEggsValue() {
+    public double getEggsValue() {
         return eggsValue;
     }
 

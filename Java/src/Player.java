@@ -97,6 +97,12 @@ public class Player {
                 filteredOptimalTargetsMap.put(baseIndex, filteredOptimalTargets);
             }
 
+            Helpers.chekIfThereIsEnoughAntsToCoverPaths(gameState, filteredOptimalTargets);
+
+
+
+            //Now populate with BEACONs. The command is BEACON <cellIdx> <strength> and is separated by ;
+            //Collect all filteredOptimalTargets and build a string from the indexes of the hexes
             StringBuilder beaconString = new StringBuilder();
             System.err.println("Building beacon string from " + maxOptimalTargetsCount + " max targets");
 
