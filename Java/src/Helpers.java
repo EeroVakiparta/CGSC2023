@@ -35,6 +35,41 @@ public class Helpers {
             state.setOpponentAnts(0);
         }
 
+    public static Hex checkIfOpponentIsHarvestingThisCrystalAndGiveTheNeighbourHexToAttackIfItIsGoodIdea(List<Hex> hexes, Hex target){
+        System.err.println(target.getIndex() + " checking if worth to protect crystal");
+        if(target.getResources() < 50){
+            System.err.println(target.getIndex() + " not enough resources on crystal");
+            return null;
+        }else if (target.getOppAnts() == 0){
+            System.err.println(target.getIndex() + " no opponent ants on crystal");
+            return null;
+        }else{
+            List<Hex> oneNeighbourWithOpponentAnts = getOneNeighbourWithOpponentAnts(hexes, target);
+            if(oneNeighbourWithOpponentAnts != null){
+                return oneNeighbourWithOpponentAnts.get(0);
+            }else{
+                return null;
+            }
+        }
+
+    }
+    public static List<Hex> getOneNeighbourWithOpponentAnts(List<Hex> neighbours, Hex target){
+        List<Hex> neighboursWithOpponentAnts = new ArrayList<>();
+        for(Hex neighbour : neighbours){
+            if(neighbour.getOppAnts() > 0){
+                neighboursWithOpponentAnts.add(neighbour);
+            }
+        }
+        if(neighboursWithOpponentAnts.size() == 1){
+            return neighboursWithOpponentAnts;
+        }else if(neighboursWithOpponentAnts.size() > 1){
+            System.err.println(target.getIndex() + " more than one neighbour with opponent ants will not attack");
+            return null;
+        }else{
+            return null;
+        }
+    }
+
         //method takes a hex and returns an array of integers of the neighbours of the hex
         public static int[] getNeighbours(Hex hex) {
             int[] neighbours = new int[6];
