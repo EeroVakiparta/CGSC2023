@@ -30,14 +30,7 @@ public class PathFinder {
                 break; // Found the shortest paths, exit the loop
             }
 
-            Integer[] neighbors = {
-                    currentHex.getNeigh0(),
-                    currentHex.getNeigh1(),
-                    currentHex.getNeigh2(),
-                    currentHex.getNeigh3(),
-                    currentHex.getNeigh4(),
-                    currentHex.getNeigh5()
-            };
+            Integer[] neighbors = {currentHex.getNeigh0(), currentHex.getNeigh1(), currentHex.getNeigh2(), currentHex.getNeigh3(), currentHex.getNeigh4(), currentHex.getNeigh5()};
 
             for (Integer neighborIndex : neighbors) {
                 if (neighborIndex != null && neighborIndex != -1) {
@@ -65,7 +58,6 @@ public class PathFinder {
                 }
             }
         }
-
         return paths.get(targetHex.getIndex());
     }
 

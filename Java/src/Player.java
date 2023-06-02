@@ -1,8 +1,4 @@
-import java.awt.*;
 import java.util.*;
-import java.io.*;
-import java.math.*;
-import java.util.List;
 
 /**
  * Auto-generated code below aims at helping you parse
@@ -29,9 +25,9 @@ public class Player {
             // initial hexes
             Hex hex = new Hex(i, type, initialResources, neigh0, neigh1, neigh2, neigh3, neigh4, neigh5, 0, 0, 0, 0);
             hexes.add(hex);
-            if(type == 1){
+            if (type == 1) {
                 gameState.setInitialEggs(gameState.getInitialEggs() + initialResources);
-            }else if(type == 2){
+            } else if (type == 2) {
                 gameState.setInitialCrystals(gameState.getInitialCrystals() + initialResources);
             }
         }
@@ -98,7 +94,6 @@ public class Player {
             }
 
             Helpers.chekIfThereIsEnoughAntsToCoverPaths(gameState, filteredOptimalTargets);
-
 
 
             //Now populate with BEACONs. The command is BEACON <cellIdx> <strength> and is separated by ;
