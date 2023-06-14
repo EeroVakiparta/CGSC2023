@@ -93,7 +93,8 @@ public class Player {
                 filteredOptimalTargetsMap.put(baseIndex, filteredOptimalTargets);
             }
 
-            Helpers.chekIfThereIsEnoughAntsToCoverPaths(gameState, filteredOptimalTargets);
+            //TODO: make this work again
+            //Helpers.chekIfThereIsEnoughAntsToCoverPaths(gameState, filteredOptimalTargets);
 
 
             //Now populate with BEACONs. The command is BEACON <cellIdx> <strength> and is separated by ;
