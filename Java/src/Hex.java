@@ -17,9 +17,10 @@ public class Hex {
     int myAnts; // the amount of your ants on this cell
     int oppAnts; // the amount of opponent ants on this cell
 
-    double value;
+    int value;
+    int distanceToMyBase;
 
-    public Hex(int index, int type, int initialResources, int neigh0, int neigh1, int neigh2, int neigh3, int neigh4, int neigh5, int resources, int myAnts, int oppAnts, double value) {
+    public Hex(int index, int type, int initialResources, int neigh0, int neigh1, int neigh2, int neigh3, int neigh4, int neigh5, int resources, int myAnts, int oppAnts, int value) {
         this.index = index;
         this.type = type;
         this.initialResources = initialResources;
@@ -33,6 +34,10 @@ public class Hex {
         this.myAnts = myAnts;
         this.oppAnts = oppAnts;
         this.value = value;
+    }
+
+    public Hex() {
+
     }
 
     public int getIndex() {
@@ -131,12 +136,20 @@ public class Hex {
         this.oppAnts = oppAnts;
     }
 
-    public double getValue() {
+    public int getValue() {
         return value;
     }
 
-    public void setValue(double value) {
+    public void setValue(int value) {
         this.value = value;
+    }
+
+    public int getDistanceToMyBase() {
+        return distanceToMyBase;
+    }
+
+    public void setDistanceToMyBase(int distanceToMyBase) {
+        this.distanceToMyBase = distanceToMyBase;
     }
 
     @Override
@@ -155,6 +168,7 @@ public class Hex {
                 ", myAnts=" + myAnts +
                 ", oppAnts=" + oppAnts +
                 ", value=" + value +
+                ", distanceToMyBase=" + distanceToMyBase +
                 '}';
     }
 
